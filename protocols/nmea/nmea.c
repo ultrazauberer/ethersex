@@ -33,7 +33,7 @@ volatile uint8_t nmea_str_complete = 0;     // 1 .. String komplett empfangen
 volatile uint8_t nmea_str_count = 0;
 volatile char nmea_string[NMEA_MAXSTRLEN + 1] = "";
 
-struct nmea_gprmc_t gprmc;
+struct nmea_gprmc_t nmea_gprmc;
 
 /* We generate our own usart init module, for our usart port */
 generate_usart_init()
@@ -107,33 +107,25 @@ uint8_t char2hex(uint8_t character){
 	}
 }
 /* eventuell kompletten buffer struct übergeben */
-void gprmc_parser(volatile char *buffer, struct nmea_gprmc_t *gprmc){
+void gprmc_parser(void){
 	//XOR = ^
 	//The checksum field consists of a '*' and two hex digits representing
 	//an 8 bit exclusive OR of all characters between, but not including, the '$' and '*'.
 	uint8_t cnt=1;
 	uint8_t checksum=0x00;
 	uint8_t checksum_gp=0x00;
-	uint8_t kommas[12]={0};
-	uint8_t komma_cnt=0;
-	uint8_t i=0;
 	//struct ungültig setzen
-	gprmc->valid=0;
+	nmea_gprmc.valid=0;
 
 	//geht buffer mit $ los?
-	if(buffer[0]=='$')
+	if(nmea_string[0]=='$')
 	{
 		//checksum bilden
-		while( buffer[cnt]!='*' && buffer[cnt]!='\0' ){
-			if(buffer[cnt]==',')
-			{
-				//Positionen der Kommas im String speichern
-				kommas[komma_cnt++]=cnt;
-			}
-			checksum^=buffer[cnt++];
+		while( nmea_string[cnt]!='*' && nmea_string[cnt]!='\0' ){
+			checksum^=nmea_string[cnt++];
 		}
 		//checksum_gp (gegeben) umwandeln
-		checksum_gp=char2hex(buffer[cnt+1])*16+char2hex(buffer[cnt+2]);
+		checksum_gp=char2hex(nmea_string[cnt+1])*16+char2hex(nmea_string[cnt+2]);
 		
 		//checksums vergleichen
 		if(checksum_gp!=checksum)
@@ -145,7 +137,7 @@ void gprmc_parser(volatile char *buffer, struct nmea_gprmc_t *gprmc){
 		}
 		else
 		{
-			if(buffer[1]=='G' && buffer[2]=='P' && buffer[3]=='R' && buffer[4]=='M' && buffer[5]=='C')
+			if(strncmp(nmea_string,"$GPRMC",6)==0)
 			{
 				//buffer enthält $GPRMC am Anfang
 				//kann geparst werden, da pruefsumme auch stimmt
@@ -155,74 +147,50 @@ void gprmc_parser(volatile char *buffer, struct nmea_gprmc_t *gprmc){
 				//0123456789012345678901234567890123456789012345678901234567890123456789
 				//0         1         2         3         4         5         6
 
-				//Ist ein A (active) oder V (void) nach dem 2. Komma?
-				if(buffer[kommas[1]+1]!='A')
+				//pointer action
+				char* p = &nmea_string[7]; // $GPRMC überspringen, pointer auf das 1. Zeichen nach Komma zeigen lassen
+				char* pDest = nmea_gprmc.time;
+				while (*p != ',') {*pDest++ = *p++;} // copy time
+				*pDest='\0'; //Ende 0 für Array
+				p++; // skip delimiter
+				pDest = &nmea_gprmc.status;
+				while (*p != ',') {*pDest++ = *p++;} // copy status
+				
+				if(nmea_gprmc.status!='A')
 				{
-					#ifdef DEBUG_NMEA
-					debug_printf("ERROR: Invalid $GPRMC dataset: not active(A)\n");
-					#endif
+					printf("Invalid $GPRMC dataset: not active(A)\n");
 					return;
 				}
-				#ifdef DEBUG_NMEA
-				debug_printf("PARSEN kann beginnen\n");
-				#endif
-				//Nach dem 1. Komma kommt die Zeit
-				while(i<(kommas[1]-kommas[0]-1))
-				{
-					gprmc->time[i]=buffer[kommas[0]+(i+1)];
-					i++;
-				}
-				i=0;
-				//Nach dem 2. Komma kommt der Status
-				gprmc->status=buffer[kommas[1]+1];
-				//Nach dem 3. Komma kommt die Latitude
-				while(i<(kommas[3]-kommas[2]-1))
-				{
-					gprmc->latitude[i]=buffer[kommas[2]+(i+1)];
-					i++;
-				}
-				i=0;
-
-				//Nach dem 4. Komma kommt die Lat_dir
-				gprmc->lat_dir=buffer[kommas[3]+1];
-
-				//Nach dem 5. Komma kommt die Longitude
-				while(i<(kommas[5]-kommas[4]-1))
-				{
-					gprmc->longitude[i]=buffer[kommas[4]+(i+1)];
-					i++;
-				}
-				i=0;
-
-				//Nach dem 6. Komma kommt die Long_dir
-				gprmc->long_dir=buffer[kommas[5]+1];
-
-				//Nach dem 7. Komma kommt Speed
-				while(i<(kommas[7]-kommas[6]-1))
-				{
-					gprmc->speed[i]=buffer[kommas[6]+(i+1)];
-					i++;
-				}
-				i=0;
-
-				//Nach dem 8. Komma kommt Angle
-				while(i<(kommas[8]-kommas[7]-1))
-				{
-					gprmc->angle[i]=buffer[kommas[7]+(i+1)];
-					i++;
-				}
-				i=0;
-
-				//Nach dem 9. Komma kommt das Datum
-				while(i<(kommas[9]-kommas[8]-1))
-				{
-					gprmc->date[i]=buffer[kommas[8]+(i+1)];
-					i++;
-				}
-				i=0;
+				
+				p++; // skip delimiter
+				pDest = nmea_gprmc.latitude;
+				while (*p != ',') {*pDest++ = *p++;} // copy latitude
+				*pDest='\0'; //Ende 0 für Array
+				p++; // skip delimiter
+				pDest = &nmea_gprmc.lat_dir;
+				while (*p != ',') {*pDest++ = *p++;} // copy lat_dir
+				p++; // skip delimiter
+				pDest = nmea_gprmc.longitude;
+				while (*p != ',') {*pDest++ = *p++;}; // copy longitude
+				*pDest='\0'; //Ende 0 für Array
+				p++; // skip delimiter
+				pDest = &nmea_gprmc.long_dir;
+				while (*p != ',') {*pDest++ = *p++;}; // copy long_dir
+				p++; // skip delimiter
+				pDest = nmea_gprmc.speed;
+				while (*p != ',') {*pDest++ = *p++;}; // copy speed
+				*pDest='\0'; //Ende 0 für Array
+				p++; // skip delimiter
+				pDest = nmea_gprmc.angle;
+				while (*p != ',') {*pDest++ = *p++;}; // copy angle
+				*pDest='\0'; //Ende 0 für Array
+				p++; // skip delimiter
+				pDest = nmea_gprmc.date;
+				while (*p != ',') {*pDest++ = *p++;}; // copy date
+				*pDest='\0'; //Ende 0 für Array
 
 				//Struct auf gültig setzen
-				gprmc->valid=1;
+				nmea_gprmc.valid=1;
 				return;
 			}
 			else
@@ -246,12 +214,12 @@ void gprmc_parser(volatile char *buffer, struct nmea_gprmc_t *gprmc){
 void gprmc_start(void){
 	if(nmea_str_complete==1)
 	{
-	gprmc_parser(&nmea_string,&gprmc);
+	gprmc_parser();
 	nmea_str_complete=0;
 	}
 
 	#ifdef DEBUG_NMEA
-	debug_printf("GPRMC: valid: %d\n",gprmc.valid);
+	debug_printf("GPRMC: valid: %d lat_dir: %c long_dir: %c\n",nmea_gprmc.valid,nmea_gprmc.lat_dir,nmea_gprmc.long_dir);
 	#endif
 }
 
@@ -259,5 +227,5 @@ void gprmc_start(void){
   -- Ethersex META --
   header(protocols/nmea/nmea.h)
   init(nmea_init)
-  timer(50, gprmc_start())
+  timer(25, gprmc_start())
 */

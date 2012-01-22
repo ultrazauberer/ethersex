@@ -50,15 +50,15 @@ struct nmea_gprmc_t
 {
   unsigned valid	: 1;
   
-  uint8_t time[10];
-  uint8_t status;
-  uint8_t latitude[9];
-  uint8_t lat_dir;
-  uint8_t longitude[10];
-  uint8_t long_dir;
-  uint8_t speed[5]; //in knots
-  uint8_t angle[6]; //track angle in degrees
-  uint8_t date[6];
+  char time[11];
+  char status;
+  char latitude[10];
+  char lat_dir;
+  char longitude[11];
+  char long_dir;
+  char speed[6]; //in knots
+  char angle[7]; //track angle in degrees
+  char date[7];
 };
 
 /* globale Variablen für buffer */
@@ -68,15 +68,15 @@ extern volatile uint8_t nmea_str_complete;     // 1 .. String komplett empfangen
 extern volatile uint8_t nmea_str_count;
 extern volatile char nmea_string[NMEA_MAXSTRLEN + 1];
 
-extern struct nmea_gprmc_t gprmc;
+extern struct nmea_gprmc_t nmea_gprmc;
 
 void nmea_init(void);
 
 /* gibt char als hex zurück: 'A'->10 */
 uint8_t char2hex(uint8_t character);
 
-/* gprmc parser */
-void gprmc_parser(volatile char *buffer, struct nmea_gprmc_t *gprmc);
+/* gprmc parser, benötigt nmea_string und nmea_gprmc als globale variablen */
+void gprmc_parser(void);
 
 /* startet den parser */
 void gprmc_start(void);

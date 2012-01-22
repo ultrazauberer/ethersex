@@ -33,19 +33,19 @@ static const char PROGMEM nmea_na[] = "no data available.";
 int16_t
 parse_cmd_nmea_buffer(char *cmd, char *output, uint16_t len) 
 {
-  memmove (output, nmea_string, 49);
+  memcpy (output, nmea_string, 49);
   return ECMD_FINAL(49);
 }
 
 int16_t
 parse_cmd_nmea_date(char *cmd, char *output, uint16_t len) 
 {
-  if(!gprmc.valid)
+  if(!nmea_gprmc.valid)
     return snprintf_P (output, len, nmea_na);
 
-  memmove (output, gprmc.time, 10);
+  memcpy (output, nmea_gprmc.time, 10);
   output[10] = ' ';
-  memmove (output + 11, gprmc.date, 6);
+  memcpy (output + 11, nmea_gprmc.date, 6);
 
   return ECMD_FINAL(17);
 }
@@ -53,14 +53,14 @@ parse_cmd_nmea_date(char *cmd, char *output, uint16_t len)
 int16_t
 parse_cmd_nmea_position(char *cmd, char *output, uint16_t len) 
 {
-  if(!gprmc.valid)
+  if(!nmea_gprmc.valid)
     return snprintf_P (output, len, nmea_na);
 
-  memmove (output, gprmc.latitude, 9);
-  memmove (output+9, gprmc.lat_dir, 1);
+  memcpy (output, nmea_gprmc.latitude, 9);
+  output[9] = nmea_gprmc.lat_dir;
   output[10] = ' ';
-  memmove (output + 11, gprmc.longitude, 10);
-  memmove (output + 21, gprmc.long_dir, 1);
+  memcpy (output + 11, nmea_gprmc.longitude, 10);
+  output[21] = nmea_gprmc.long_dir;
 
   return ECMD_FINAL(22);
 }
