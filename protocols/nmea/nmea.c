@@ -44,6 +44,7 @@ struct nmea_gprmc_t nmea_gprmc;
 /* clock_datetime_t struct anlegen */
 #ifdef NMEA_TIMESUPPORT
 struct clock_datetime_t current_time;
+uint8_t nmea_timestamp_valid=0;
 #endif
 
 /* We generate our own usart init module, for our usart port */
@@ -232,9 +233,10 @@ void gprmc_start(void){
 	
 	/* Abweichung größer gleich 1 Sekunde? Neue Zeit setzen */
 	#ifdef NMEA_TIMESUPPORT
-	if(abs(clock_get_time()-get_nmea_timestamp())>=1)
+	if(nmea_timestamp_valid==1 && abs(clock_get_time()-get_nmea_timestamp())>=1)
 	{
 		clock_set_time(get_nmea_timestamp());
+		nmea_timestamp_valid=0;
 		#ifdef NTPD_SUPPORT
 		ntp_setstratum(0);
 		#endif
@@ -272,6 +274,7 @@ uint32_t get_nmea_timestamp(void){
 	current_time.year=(nmea_gprmc.date[4]-0x30)*10;
 	current_time.year+=(nmea_gprmc.date[5]-0x30)+100;
 
+	nmea_timestamp_valid=1;
 	return clock_utc2timestamp(&current_time,2);
 	}
 }
