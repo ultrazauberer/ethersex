@@ -2,6 +2,7 @@
  *
  * Copyright (c) 2007,2008 by Christian Dietrich <stettberger@dokucode.de>
  * (c) by Alexander Neumann <alexander@bumpern.de>
+ * Copyright (c) 2012 by Florian Franke <derultrazauberer@web.de>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

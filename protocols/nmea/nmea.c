@@ -139,7 +139,7 @@ void gprmc_parser(void){
 		{
 			if(strncmp(nmea_string,"$GPRMC",6)==0)
 			{
-				//buffer enthält $GPRMC am Anfang
+				//nmea_string enthält $GPRMC am Anfang
 				//kann geparst werden, da pruefsumme auch stimmt
 				//$GPRMC,145240.802,A,5229.1103,N,01331.6194,E,0.25,349.21,161211,,,A*69
 				//$GPRMC,095607.000,A,5229.0455,N,01331.6009,E,0.00,55.55,200112,,,A*54

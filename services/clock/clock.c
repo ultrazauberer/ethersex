@@ -4,6 +4,7 @@
  * Copyright (c) 2009 by Stefan Siegl <stesie@brokenpipe.de>
  * Copyright (c) 2011 by Erik Kunze <ethersex@erik-kunze.de>
  * (c) by Alexander Neumann <alexander@bumpern.de>
+ * Copyright (c) 2012 by Florian Franke <derultrazauberer@web.de>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -275,7 +276,7 @@ clock_get_startup (void)
 
 #if defined(CLOCK_DATETIME_SUPPORT) || defined(DCF77_SUPPORT) || defined(CLOCK_DATE_SUPPORT) || defined(CLOCK_TIME_SUPPORT)
 uint32_t
-clock_utc2timestamp (struct clock_datetime_t * d, uint8_t cest)
+clock_utc2timestamp (struct clock_datetime_t * d, uint8_t timezone)
 {
   uint32_t timestamp;
 
@@ -311,8 +312,13 @@ clock_utc2timestamp (struct clock_datetime_t * d, uint8_t cest)
       timestamp += (is_leap_year (year)) ? 31622400UL : 31536000UL;
     }
 
+  /* cest: 0=Winterzeit, 1=Sommerzeit, 2=UTC */
+  /* UTC errechnen anhand von Sommer/Winterzeit */
   /* convert to UTC depending on CEST */
-  timestamp -= (cest == 0) ? 3600UL : 7200UL;
+  if(timezone<2)
+  {
+    timestamp -= (timezone == 0) ? 3600UL : 7200UL;
+  }
 
   return timestamp;
 }
