@@ -158,7 +158,9 @@ void gprmc_parser(void){
 				
 				if(nmea_gprmc.status!='A')
 				{
-					printf("Invalid $GPRMC dataset: not active(A)\n");
+					#ifdef DEBUG_NMEA
+					debug_printf("Invalid $GPRMC dataset: not active(A)\n");
+					#endif
 					return;
 				}
 				
