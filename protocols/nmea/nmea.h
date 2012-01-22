@@ -76,7 +76,7 @@ extern struct nmea_gprmc_t nmea_gprmc;
 void nmea_init(void);
 
 /* gibt char als hex zurück: 'A'->10 */
-uint8_t char2hex(uint8_t character);
+uint8_t char2hex(char character);
 
 /* gprmc parser, benötigt nmea_string und nmea_gprmc als globale variablen */
 void gprmc_parser(void);

@@ -89,7 +89,7 @@ ISR(usart(USART,_RX_vect))
   }
 }
 
-uint8_t char2hex(uint8_t character){
+uint8_t char2hex(char character){
 	//returns hex value of char
 	switch (character)
 	{
