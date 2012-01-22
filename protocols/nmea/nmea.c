@@ -233,7 +233,7 @@ void gprmc_start(void){
 	
 	/* Abweichung größer gleich 1 Sekunde? Neue Zeit setzen */
 	#ifdef NMEA_TIMESUPPORT
-	if(nmea_timestamp_valid==1 && abs(clock_get_time()-get_nmea_timestamp())>=1)
+	if(abs(clock_get_time()-get_nmea_timestamp())>=1 && nmea_timestamp_valid==1)
 	{
 		clock_set_time(get_nmea_timestamp());
 		nmea_timestamp_valid=0;
