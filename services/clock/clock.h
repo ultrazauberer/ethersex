@@ -99,7 +99,7 @@ int8_t last_sunday_in_month(uint8_t day, uint8_t dow);
 #endif
 
 /** convert a datetime struct to timestamp  */
-uint32_t clock_utc2timestamp(struct clock_datetime_t *d, uint8_t cest);
+uint32_t clock_utc2timestamp(struct clock_datetime_t *d, uint8_t timezone);
 
 /** test if given year is a leap year */
 #define is_leap_year(y)     (((y % 4) == 0) && ( (y % 100 != 0) || (y % 400 == 0) ))

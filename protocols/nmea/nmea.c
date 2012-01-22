@@ -26,14 +26,25 @@
 #include "core/debug.h"
 #include "core/usart.h"
 #include "nmea.h"
+#ifdef NMEA_TIMESUPPORT
+#include "services/clock/clock.h"
+#endif
+#ifdef NTPD_SUPPORT
+#include "services/ntp/ntpd_net.h"
+#endif
 
 /* globale Variablen für buffer */
- 
 volatile uint8_t nmea_str_complete = 0;     // 1 .. String komplett empfangen
 volatile uint8_t nmea_str_count = 0;
 volatile char nmea_string[NMEA_MAXSTRLEN + 1] = "";
 
+/* nmea_gprmc_t struct anlegen */
 struct nmea_gprmc_t nmea_gprmc;
+
+/* clock_datetime_t struct anlegen */
+#ifdef NMEA_TIMESUPPORT
+struct clock_datetime_t current_time;
+#endif
 
 /* We generate our own usart init module, for our usart port */
 generate_usart_init()
@@ -218,12 +229,53 @@ void gprmc_start(void){
 	{
 	gprmc_parser();
 	nmea_str_complete=0;
+	
+	/* Abweichung größer gleich 1 Sekunde? Neue Zeit setzen */
+	#ifdef NMEA_TIMESUPPORT
+	if(abs(clock_get_time()-get_nmea_timestamp())>=1)
+	{
+		clock_set_time(get_nmea_timestamp());
+		#ifdef NTPD_SUPPORT
+		ntp_setstratum(0);
+		#endif
+		#ifdef DEBUG_NMEA
+		debug_printf("GPS-Zeit gesetzt!\n");
+		#endif
+	}
+	#endif
 	}
 
 	#ifdef DEBUG_NMEA
 	debug_printf("GPRMC: valid: %d lat_dir: %c long_dir: %c\n",nmea_gprmc.valid,nmea_gprmc.lat_dir,nmea_gprmc.long_dir);
+	#ifdef NMEA_TIMESUPPORT
+	debug_printf("Timestamp: %lu\n",get_nmea_timestamp());
+	#endif
 	#endif
 }
+
+/* Zeitfunktionen */
+#ifdef NMEA_TIMESUPPORT
+uint32_t get_nmea_timestamp(void){
+	if(nmea_gprmc.valid)
+	{
+	current_time.sec=(nmea_gprmc.time[4]-0x30)*10;
+	current_time.sec+=(nmea_gprmc.time[5]-0x30);
+	current_time.min=(nmea_gprmc.time[2]-0x30)*10;
+	current_time.min+=(nmea_gprmc.time[3]-0x30);
+	current_time.hour=(nmea_gprmc.time[0]-0x30)*10;
+	current_time.hour+=(nmea_gprmc.time[1]-0x30);
+	current_time.day=(nmea_gprmc.date[0]-0x30)*10;
+	current_time.day+=(nmea_gprmc.date[1]-0x30);
+	current_time.month=(nmea_gprmc.date[2]-0x30)*10;
+	current_time.month+=(nmea_gprmc.date[3]-0x30);
+	/* year enthält aktuelles jahr-1900 --> deswegen yy+100 */
+	current_time.year=(nmea_gprmc.date[4]-0x30)*10;
+	current_time.year+=(nmea_gprmc.date[5]-0x30)+100;
+
+	return clock_utc2timestamp(&current_time,2);
+	}
+}
+#endif
 
 /*
   -- Ethersex META --

@@ -45,6 +45,9 @@
 /* enable debugging */
 #define DEBUG_NMEA
 
+/* enable timesupport for GPS */
+#define NMEA_TIMESUPPORT
+
 /* added $GPRMC struct */
 struct nmea_gprmc_t
 {
@@ -80,5 +83,10 @@ void gprmc_parser(void);
 
 /* startet den parser */
 void gprmc_start(void);
+
+/* clock_datetime_t struct befüllen und timestamp zurückgeben */
+#ifdef NMEA_TIMESUPPORT
+uint32_t get_nmea_timestamp(void);
+#endif
 
 #endif	/* NMEA_H */
