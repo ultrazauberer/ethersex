@@ -32,10 +32,16 @@
 
 #include "config.h"
 #define USE_USART NMEA_USE_USART
-#define BAUD 4800
+#define BAUD 19200
 #include "core/usart.h"
 
-volatile struct recv_buffer uart_buffer;
+/* globale Variablen für buffer */
+#define NMEA_MAXSTRLEN 10
+ 
+volatile uint8_t nmea_str_complete = 0;     // 1 .. String komplett empfangen
+volatile uint8_t nmea_str_count = 0;
+volatile char nmea_string[NMEA_MAXSTRLEN + 1] = "";
+
 struct nmea_gprmc_t gprmc;
 
 /* We generate our own usart init module, for our usart port */
@@ -46,40 +52,29 @@ nmea_init(void)
 {
   /* Initialize the usart module */
   usart_init();
-  uart_buffer.ready = 0;
 }
 
-/* Zeichen von USART in buffer schreiben */
+/* UART in buffer */
 ISR(usart(USART,_RX_vect))
 {
-  /* nur buffer befüllen, wenn er leer ist */
-  if(uart_buffer.ready==0)
-  {
-  while (usart(UCSR,A) & _BV(usart(RXC)))
-  {
-    if (usart(UCSR,A) & (_BV(usart(FE))|_BV(usart(DOR))|_BV(usart(UPE))))
-    {
-	/* ignore errors (receive, transmit,...) see yport.c */
-      uint8_t v = usart(UDR);
-      (void) v;
+  unsigned char nextChar;
+ 
+  // Daten aus dem Puffer lesen
+  nextChar = usart(UDR);
+  if( nmea_str_complete == 0 ) {	// wenn uart_string gerade in Verwendung, neues Zeichen verwerfen
+ 
+    // Daten werden erst in uart_string geschrieben, wenn nicht String-Ende/max Zeichenlänge erreicht ist/string gerade verarbeitet wird
+    if( nextChar != '\n' &&
+        nextChar != '\r' &&
+        nmea_str_count < NMEA_MAXSTRLEN - 1 ) {
+      nmea_string[nmea_str_count] = nextChar;
+      nmea_str_count++;
     }
-    else
-    {
-		uint8_t v = usart(UDR);
-		//Abbruchbedingung <CR>=13(dezimal) und <LF>=10(dezimal)
-		//80==BUFFER_LEN -1
-		if ((v != 10 || v != 13 ) && uart_buffer.len < BUFFER_LEN - 1)
-		{
-			uart_buffer.data[uart_buffer.len++] = v;
-		}
-		else
-		{
-		//ToDo - '\0' an buffer anhängen?
-			uart_buffer.data[buffer.len] = '\0';
-			uart_buffer.ready = 1;
-		}
+    else {
+      nmea_string[nmea_str_count] = '\0';
+      nmea_str_count = 0;
+      nmea_str_complete = 1;
     }
-  }
   }
 }
 
@@ -191,11 +186,10 @@ void gprmc_parser(uint8_t *buffer, struct nmea_gprmc_t *gprmc){
 }
 
 void gprmc_start(void){
-	if(uart_buffer.ready==1)
+	if(nmea_str_complete==1)
 	{
-	gprmc_parser(&uart_buffer.data,&gprmc);
-	uart_buffer.len=0;
-	uart_buffer.ready=0;
+	gprmc_parser(&nmea_string,&gprmc);
+	nmea_str_complete=0;
 	}
 	
 	#ifdef DEBUG_NMEA
@@ -208,5 +202,4 @@ void gprmc_start(void){
   -- Ethersex META --
   header(protocols/nmea/nmea.h)
   init(nmea_init)
-  timer(50, gprmc_start())
 */

@@ -51,17 +51,13 @@ struct nmea_gprmc_t
   uint8_t date[6];
 };
 
-/* maximale Länge eines NMEA Sentences ist 80 + \n */
-#define BUFFER_LEN 81
-
-struct recv_buffer
-{
-  unsigned ready	: 1;
-  uint8_t len;
-  uint8_t data[BUFFER_LEN];
-};
-
-extern struct recv_buffer buffer;
+/* globale Variablen für buffer */
+/*#define NMEA_MAXSTRLEN 10
+ 
+volatile uint8_t nmea_str_complete = 0;     // 1 .. String komplett empfangen
+volatile uint8_t nmea_str_count = 0;
+volatile char nmea_string[NMEA_MAXSTRLEN + 1] = "";
+*/
 extern struct nmea_gprmc_t gprmc;
 
 void nmea_init(void);
