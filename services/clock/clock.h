@@ -24,6 +24,10 @@
 #ifndef _CLOCK_H
 #define _CLOCK_H
 
+/* Zeitzonen festlegen, sonst BUG bei timestamp-Berechnung */
+#define TIMEZONE_UTC 0
+#define TIMEZONE_CEST 1
+
 #include <inttypes.h>
 #include "config.h"
 

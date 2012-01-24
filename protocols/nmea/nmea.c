@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009 by Stefan Siegl <stesie@brokenpipe.de>
+ * Copyright (c) 2012 by Florian Franke <derultrazauberer@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,12 +22,21 @@
 
 #include "nmea.h"
 
-struct nmea_t nmea_data;
+/* include debugging */
+#include "core/debug.h"
+#define DEBUG_NMEA
+
+/* include clock.h for timesupport */
+//#include "services/clock/clock.h"
+//struct clock_datetime_t current_time;
 
 #include "config.h"
 #define USE_USART NMEA_USE_USART
 #define BAUD 4800
 #include "core/usart.h"
+
+struct recv_buffer buffer;
+struct nmea_gprmc_t gprmc;
 
 /* We generate our own usart init module, for our usart port */
 generate_usart_init()
@@ -38,63 +48,156 @@ nmea_init(void)
   usart_init();
 }
 
-
+/* Zeichen von USART in buffer schreiben */
 ISR(usart(USART,_RX_vect))
 {
-  /* Ignore errors */
-  if ((usart(UCSR,A) & _BV(usart(DOR))) || (usart(UCSR,A) & _BV(usart(FE))))
+  while (usart(UCSR,A) & _BV(usart(RXC)))
+  {
+    if (usart(UCSR,A) & (_BV(usart(FE))|_BV(usart(DOR))|_BV(usart(UPE))))
     {
+	/* ignore errors (receive, transmit,...) see yport.c */
       uint8_t v = usart(UDR);
       (void) v;
-      return;
     }
-
-  uint8_t data = usart(UDR);
-  if (data == '$')
+    else
     {
-      nmea_data.locked = 1;
-      nmea_data.ptr = 0;
+		uint8_t v = usart(UDR);
+		//Abbruchbedingung <CR>=13(dezimal) und <LF>=10(dezimal)
+		if ((v != 10 || v != 13 ) && buffer.len < BUFFER_LEN - 1)
+		{
+			buffer.data[buffer.len++] = v;
+			#ifdef DEBUG_NMEA
+			debug_printf("UART: %c\n",v);
+			#endif
+		}
+		else
+		{
+		//ToDo - '\0' an buffer anhängen?
+			buffer.data[buffer.len] = '\0';
+		}
     }
-  else if (!nmea_data.locked)
-    return;
-  else
-    nmea_data.ptr ++;
-
-  if ((nmea_data.ptr == 3 || nmea_data.ptr == 4)
-      && data != 'G')
-  streamerror: {
-      nmea_data.locked = 0;
-      return;
-    }
-
-  if (nmea_data.ptr == 5 && data != 'A')
-    goto streamerror;
-
-  if (nmea_data.ptr >= 18 && nmea_data.ptr <= 26)
-    nmea_data.latitude[nmea_data.ptr - 18] = data;
-
-  else if (nmea_data.ptr == 28)
-    nmea_data.latitude_dir = data;
-
-  else if (nmea_data.ptr >= 30 && nmea_data.ptr <= 39)
-    nmea_data.longitude[nmea_data.ptr - 30] = data;
-
-  else if (nmea_data.ptr == 41)
-    nmea_data.longitude_dir = data;
-
-  else if (nmea_data.ptr == 45)
-    nmea_data.satellites = (data - '0') * 10;
-
-  else if (nmea_data.ptr == 46)
-    {
-      nmea_data.satellites += (data - '0');
-      nmea_data.valid = 1;
-    }
+  }
 }
 
+uint8_t char2hex(uint8_t character){
+	//returns hex value of char
+	switch (character)
+	{
+		case 48: return 0; break; //0
+		case 49: return 1; break; //1
+		case 50: return 2; break; //2
+		case 51: return 3; break; //3
+		case 52: return 4; break; //4
+		case 53: return 5; break; //5
+		case 54: return 6; break; //6
+		case 55: return 7; break; //7
+		case 56: return 8; break; //8
+		case 57: return 9; break; //9
+		case 65: return 10; break; //A
+		case 66: return 11; break; //B
+		case 67: return 12; break; //C
+		case 68: return 13; break; //D
+		case 69: return 14; break; //E
+		case 70: return 15; break; //F
+		case 97: return 10; break; //a
+		case 98: return 11; break; //b
+		case 99: return 12; break; //c
+		case 100: return 13; break; //d
+		case 101: return 14; break; //e
+		case 102: return 15; break; //f
+		default: return 255;
+	}
+}
+
+void gprmc_parser(uint8_t *buffer, struct nmea_gprmc_t *gprmc){
+	//XOR = ^
+	//The checksum field consists of a '*' and two hex digits representing
+	//an 8 bit exclusive OR of all characters between, but not including, the '$' and '*'.
+	uint8_t cnt=1;
+	uint8_t checksum=0x00;
+	uint8_t checksum_gp;
+	//struct ungültig setzen
+	gprmc->valid=0;
+
+	//geht buffer mit $ los?
+	if(buffer[0]=='$')
+	{
+		//checksum bilden
+		while( buffer[cnt]!='*' ){
+			checksum^=buffer[cnt];
+			cnt++;
+		}
+		//checksum_gp (gegeben) umwandeln
+		checksum_gp=char2hex(buffer[cnt+1])*16+char2hex(buffer[cnt+2]);
+		
+		//checksums vergleichen
+		if(checksum_gp!=checksum)
+		{
+			#ifdef DEBUG_NMEA
+			debug_printf("ERROR: invalid checksum\n");
+			#endif
+			return;
+		}
+		else
+		{
+			if(buffer[1]=='G' && buffer[2]=='P' && buffer[3]=='R' && buffer[4]=='M' && buffer[5]=='C')
+			{
+				//buffer enthält $GPRMC am Anfang
+				//kann geparst werden, da pruefsumme auch stimmt
+				//$GPRMC,145240.802,A,5229.1103,N,01331.6194,E,0.25,349.21,161211,,,A*69
+				//0123456789012345678901234567890123456789012345678901234567890123456789
+				//0         1         2         3         4         5         6
+				#ifdef DEBUG_NMEA
+				debug_printf("PARSEN kann beginnen\n");
+				#endif
+				gprmc->date[0]=buffer[57];
+				gprmc->date[1]=buffer[58];
+				gprmc->date[2]=buffer[59];
+				gprmc->date[3]=buffer[60];
+				gprmc->date[4]=buffer[61];
+				gprmc->date[5]=buffer[62];
+				gprmc->time[0]=buffer[7];
+				gprmc->time[1]=buffer[8];
+				gprmc->time[2]=buffer[9];
+				gprmc->time[3]=buffer[10];
+				gprmc->time[4]=buffer[11];
+				gprmc->time[5]=buffer[12];
+				gprmc->time[6]=buffer[13];
+				gprmc->time[7]=buffer[14];
+				gprmc->time[8]=buffer[15];
+				gprmc->time[9]=buffer[16];
+				gprmc->valid=1;
+				return;
+			}
+			else
+			{
+				#ifdef DEBUG_NMEA
+				debug_printf("ERROR: invalid beginning (expected $GPRMC)\n");
+				#endif
+				return;
+			}
+		}
+	}
+	else
+	{
+		#ifdef DEBUG_NMEA
+		debug_printf("ERROR: wrong first character (expected $)\n");
+		#endif
+		return;
+	}
+}
+
+void gprmc_start(void){
+	gprmc_parser(&buffer.data,&gprmc);
+	
+	#ifdef DEBUG_NMEA
+	debug_printf("GPRMC: valid: %d\n",gprmc.valid);
+	#endif
+}
 
 /*
   -- Ethersex META --
   header(protocols/nmea/nmea.h)
   init(nmea_init)
+  timer(50, gprmc_start())
 */

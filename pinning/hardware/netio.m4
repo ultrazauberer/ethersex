@@ -1,6 +1,15 @@
 /* port the enc28j60 is attached to */
 pin(SPI_CS_NET, SPI_CS_HARDWARE)
 
+ifdef(`conf_DCF1', `dnl
+ /* port config for DCF77 */
+ pin(DCF1_PCINT, PD2, INPUT)
+')dnl
+
+ifdef(`conf_DCF1_USE_PON', `dnl
+ pin(DCF1_PON, PD3, OUTPUT)
+')dnl
+
 ifdef(`conf_SD_READER', `dnl
   /* port the sd-reader CS is attached to */
   pin(SPI_CS_SD_READER, PB2, OUTPUT)

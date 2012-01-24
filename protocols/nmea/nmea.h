@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009 by Stefan Siegl <stesie@brokenpipe.de>
+ * Copyright (c) 2012 by Florian Franke <derultrazauberer@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,23 +33,45 @@
    0         1         2         3         4
  */
 
-struct nmea_t
+/*
+   Navibe example data:
+   $GPGGA,145240.802,5229.1103,N,01331.6194,E,1,03,4.8,-44.6,M,44.6,M,,0000*47
+   $GPRMC,145240.802,A,5229.1103,N,01331.6194,E,0.25,349.21,161211,,,A*69
+
+   012345678901234567890123456789012345678901234567890123456789012345678901234
+   0         1         2         3         4         5         6         7
+*/
+
+/* added $GPRMC struct */
+struct nmea_gprmc_t
 {
-  unsigned locked	: 1;
   unsigned valid	: 1;
-  unsigned ptr		: 6;
-
-  uint8_t latitude[9];
-  uint8_t latitude_dir;
-
-  uint8_t longitude[10];
-  uint8_t longitude_dir;
-
-  uint8_t satellites;
+  
+  uint8_t time[10];
+  uint8_t date[6];
 };
 
-extern struct nmea_t nmea_data;
+/* maximale Länge eines NMEA Sentences ist 80 + \n */
+#define BUFFER_LEN 81
+
+struct recv_buffer
+{
+  uint8_t len;
+  uint8_t data[BUFFER_LEN];
+};
+
+extern struct recv_buffer buffer;
+extern struct nmea_gprmc_t gprmc;
 
 void nmea_init(void);
+
+/* gibt char als hex zurück: 'A'->10 */
+uint8_t char2hex(uint8_t character);
+
+/* gprmc parser */
+void gprmc_parser(uint8_t *buffer, struct nmea_gprmc_t *gprmc);
+
+/* startet den parser */
+void gprmc_start(void);
 
 #endif	/* NMEA_H */
