@@ -56,6 +56,7 @@ struct nmea_gprmc_t
 
 struct recv_buffer
 {
+  unsigned ready	: 1;
   uint8_t len;
   uint8_t data[BUFFER_LEN];
 };

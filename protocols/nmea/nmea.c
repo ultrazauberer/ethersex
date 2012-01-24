@@ -35,7 +35,7 @@
 #define BAUD 4800
 #include "core/usart.h"
 
-struct recv_buffer buffer;
+volatile struct recv_buffer uart_buffer;
 struct nmea_gprmc_t gprmc;
 
 /* We generate our own usart init module, for our usart port */
@@ -46,11 +46,15 @@ nmea_init(void)
 {
   /* Initialize the usart module */
   usart_init();
+  uart_buffer.ready = 0;
 }
 
 /* Zeichen von USART in buffer schreiben */
 ISR(usart(USART,_RX_vect))
 {
+  /* nur buffer befüllen, wenn er leer ist */
+  if(uart_buffer.ready==0)
+  {
   while (usart(UCSR,A) & _BV(usart(RXC)))
   {
     if (usart(UCSR,A) & (_BV(usart(FE))|_BV(usart(DOR))|_BV(usart(UPE))))
@@ -63,19 +67,19 @@ ISR(usart(USART,_RX_vect))
     {
 		uint8_t v = usart(UDR);
 		//Abbruchbedingung <CR>=13(dezimal) und <LF>=10(dezimal)
-		if ((v != 10 || v != 13 ) && buffer.len < BUFFER_LEN - 1)
+		//80==BUFFER_LEN -1
+		if ((v != 10 || v != 13 ) && uart_buffer.len < BUFFER_LEN - 1)
 		{
-			buffer.data[buffer.len++] = v;
-			#ifdef DEBUG_NMEA
-			debug_printf("UART: %c\n",v);
-			#endif
+			uart_buffer.data[uart_buffer.len++] = v;
 		}
 		else
 		{
 		//ToDo - '\0' an buffer anhängen?
-			buffer.data[buffer.len] = '\0';
+			uart_buffer.data[buffer.len] = '\0';
+			uart_buffer.ready = 1;
 		}
     }
+  }
   }
 }
 
@@ -108,7 +112,7 @@ uint8_t char2hex(uint8_t character){
 		default: return 255;
 	}
 }
-
+/* eventuell kompletten buffer struct übergeben */
 void gprmc_parser(uint8_t *buffer, struct nmea_gprmc_t *gprmc){
 	//XOR = ^
 	//The checksum field consists of a '*' and two hex digits representing
@@ -123,9 +127,8 @@ void gprmc_parser(uint8_t *buffer, struct nmea_gprmc_t *gprmc){
 	if(buffer[0]=='$')
 	{
 		//checksum bilden
-		while( buffer[cnt]!='*' ){
-			checksum^=buffer[cnt];
-			cnt++;
+		while( buffer[cnt]!='*' && buffer[cnt]!='\0' ){
+			checksum^=buffer[cnt++];
 		}
 		//checksum_gp (gegeben) umwandeln
 		checksum_gp=char2hex(buffer[cnt+1])*16+char2hex(buffer[cnt+2]);
@@ -188,13 +191,19 @@ void gprmc_parser(uint8_t *buffer, struct nmea_gprmc_t *gprmc){
 }
 
 void gprmc_start(void){
-	gprmc_parser(&buffer.data,&gprmc);
+	if(uart_buffer.ready==1)
+	{
+	gprmc_parser(&uart_buffer.data,&gprmc);
+	uart_buffer.len=0;
+	uart_buffer.ready=0;
+	}
 	
 	#ifdef DEBUG_NMEA
 	debug_printf("GPRMC: valid: %d\n",gprmc.valid);
 	#endif
 }
 
+//  timer(50, gprmc_start())
 /*
   -- Ethersex META --
   header(protocols/nmea/nmea.h)
