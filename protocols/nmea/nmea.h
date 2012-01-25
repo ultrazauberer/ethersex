@@ -52,12 +52,12 @@ struct nmea_gprmc_t
 };
 
 /* globale Variablen für buffer */
-/*#define NMEA_MAXSTRLEN 10
+#define NMEA_MAXSTRLEN 80
  
-volatile uint8_t nmea_str_complete = 0;     // 1 .. String komplett empfangen
-volatile uint8_t nmea_str_count = 0;
-volatile char nmea_string[NMEA_MAXSTRLEN + 1] = "";
-*/
+extern volatile uint8_t nmea_str_complete;     // 1 .. String komplett empfangen
+extern volatile uint8_t nmea_str_count;
+extern volatile char nmea_string[NMEA_MAXSTRLEN + 1];
+
 extern struct nmea_gprmc_t gprmc;
 
 void nmea_init(void);

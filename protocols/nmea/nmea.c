@@ -36,7 +36,6 @@
 #include "core/usart.h"
 
 /* globale Variablen für buffer */
-#define NMEA_MAXSTRLEN 10
  
 volatile uint8_t nmea_str_complete = 0;     // 1 .. String komplett empfangen
 volatile uint8_t nmea_str_count = 0;
@@ -202,4 +201,5 @@ void gprmc_start(void){
   -- Ethersex META --
   header(protocols/nmea/nmea.h)
   init(nmea_init)
+  timer(25, gprmc_start())
 */

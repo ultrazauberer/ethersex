@@ -30,12 +30,12 @@
 static const char PROGMEM nmea_na[] = "no data available.";
 
 int16_t
-parse_cmd_nmea_get(char *cmd, char *output, uint16_t len) 
+parse_cmd_nmea_buffer(char *cmd, char *output, uint16_t len) 
 {
-  memmove (output, nmea_string, 40);
-  return ECMD_FINAL(40);
+  memmove (output, nmea_string, 49);
+  return ECMD_FINAL(49);
 }
-/*
+
 int16_t
 parse_cmd_nmea_gprmc(char *cmd, char *output, uint16_t len) 
 {
@@ -48,10 +48,11 @@ parse_cmd_nmea_gprmc(char *cmd, char *output, uint16_t len)
 
   return ECMD_FINAL(17);
 }
-*/
+
 //  ecmd_feature(nmea_gprmc, "nmea gprmc",,get gprmc time and date)
 /*
   -- Ethersex META --
   block([[GPS]])
-  ecmd_feature(nmea_get, "nmea get",,Get latitude and longitude data)
+  ecmd_feature(nmea_buffer, "nmea buffer",,Get latitude and longitude data)
+  ecmd_feature(nmea_gprmc, "nmea gprmc",,get gprmc time and date)
 */
