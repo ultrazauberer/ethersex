@@ -113,7 +113,9 @@ void gprmc_parser(volatile char *buffer, struct nmea_gprmc_t *gprmc){
 	//an 8 bit exclusive OR of all characters between, but not including, the '$' and '*'.
 	uint8_t cnt=1;
 	uint8_t checksum=0x00;
-	uint8_t checksum_gp;
+	uint8_t checksum_gp=0x00;
+	uint8_t kommas[12]={0};
+	uint8_t komma_cnt=0;
 	//struct ungültig setzen
 	gprmc->valid=0;
 
@@ -122,6 +124,11 @@ void gprmc_parser(volatile char *buffer, struct nmea_gprmc_t *gprmc){
 	{
 		//checksum bilden
 		while( buffer[cnt]!='*' && buffer[cnt]!='\0' ){
+			if(buffer[cnt]==',')
+			{
+				//Positionen der Kommas im String speichern
+				kommas[komma_cnt++]=cnt;
+			}
 			checksum^=buffer[cnt++];
 		}
 		//checksum_gp (gegeben) umwandeln
@@ -137,32 +144,73 @@ void gprmc_parser(volatile char *buffer, struct nmea_gprmc_t *gprmc){
 		}
 		else
 		{
-			if(buffer[1]=='G' && buffer[2]=='P' && buffer[3]=='R' && buffer[4]=='M' && buffer[5]=='C' && buffer[18]=='A')
+			if(buffer[1]=='G' && buffer[2]=='P' && buffer[3]=='R' && buffer[4]=='M' && buffer[5]=='C')
 			{
 				//buffer enthält $GPRMC am Anfang
 				//kann geparst werden, da pruefsumme auch stimmt
 				//$GPRMC,145240.802,A,5229.1103,N,01331.6194,E,0.25,349.21,161211,,,A*69
+				//$GPRMC,095607.000,A,5229.0455,N,01331.6009,E,0.00,55.55,200112,,,A*54
+				//$GPRMC,143416.794,V,,,,,,,161211,,,N*46
 				//0123456789012345678901234567890123456789012345678901234567890123456789
 				//0         1         2         3         4         5         6
+
+				//Ist ein A (active) oder V (void) nach dem 2. Komma?
+				if(buffer[kommas[1]+1]!='A')
+				{
+					#ifdef DEBUG_NMEA
+					debug_printf("ERROR: Invalid $GPRMC dataset: not active(A)\n");
+					#endif
+					return;
+				}
 				#ifdef DEBUG_NMEA
 				debug_printf("PARSEN kann beginnen\n");
 				#endif
-				gprmc->date[0]=buffer[57];
-				gprmc->date[1]=buffer[58];
-				gprmc->date[2]=buffer[59];
-				gprmc->date[3]=buffer[60];
-				gprmc->date[4]=buffer[61];
-				gprmc->date[5]=buffer[62];
-				gprmc->time[0]=buffer[7];
-				gprmc->time[1]=buffer[8];
-				gprmc->time[2]=buffer[9];
-				gprmc->time[3]=buffer[10];
-				gprmc->time[4]=buffer[11];
-				gprmc->time[5]=buffer[12];
-				gprmc->time[6]=buffer[13];
-				gprmc->time[7]=buffer[14];
-				gprmc->time[8]=buffer[15];
-				gprmc->time[9]=buffer[16];
+				//Nach dem 1. Komma kommt die Zeit
+				gprmc->time[0]=buffer[kommas[0]+1];
+				gprmc->time[1]=buffer[kommas[0]+2];
+				gprmc->time[2]=buffer[kommas[0]+3];
+				gprmc->time[3]=buffer[kommas[0]+4];
+				gprmc->time[4]=buffer[kommas[0]+5];
+				gprmc->time[5]=buffer[kommas[0]+6];
+				gprmc->time[6]=buffer[kommas[0]+7];
+				gprmc->time[7]=buffer[kommas[0]+8];
+				gprmc->time[8]=buffer[kommas[0]+9];
+				gprmc->time[9]=buffer[kommas[0]+10];
+				//Nach dem 2. Komma kommt der Status
+				gprmc->status=buffer[kommas[1]+1];
+				//Nach dem 3. Komma kommt die Latitude
+				gprmc->latitude[0]=buffer[kommas[2]+1];
+				gprmc->latitude[1]=buffer[kommas[2]+2];
+				gprmc->latitude[2]=buffer[kommas[2]+3];
+				gprmc->latitude[3]=buffer[kommas[2]+4];
+				gprmc->latitude[4]=buffer[kommas[2]+5];
+				gprmc->latitude[5]=buffer[kommas[2]+6];
+				gprmc->latitude[6]=buffer[kommas[2]+7];
+				gprmc->latitude[7]=buffer[kommas[2]+8];
+				gprmc->latitude[8]=buffer[kommas[2]+9];
+				//Nach dem 4. Komma kommt die Lat_dir
+				gprmc->lat_dir=buffer[kommas[3]+1];
+				//Nach dem 5. Komma kommt die Longitude
+				gprmc->longitude[0]=buffer[kommas[4]+1];
+				gprmc->longitude[1]=buffer[kommas[4]+2];
+				gprmc->longitude[2]=buffer[kommas[4]+3];
+				gprmc->longitude[3]=buffer[kommas[4]+4];
+				gprmc->longitude[4]=buffer[kommas[4]+5];
+				gprmc->longitude[5]=buffer[kommas[4]+6];
+				gprmc->longitude[6]=buffer[kommas[4]+7];
+				gprmc->longitude[7]=buffer[kommas[4]+8];
+				gprmc->longitude[8]=buffer[kommas[4]+9];
+				gprmc->longitude[9]=buffer[kommas[4]+10];
+				//Nach dem 6. Komma kommt die Long_dir
+				gprmc->long_dir=buffer[kommas[5]+1];
+				//Nach dem 9. Komma kommt das Datum
+				gprmc->date[0]=buffer[kommas[8]+1];
+				gprmc->date[1]=buffer[kommas[8]+2];
+				gprmc->date[2]=buffer[kommas[8]+3];
+				gprmc->date[3]=buffer[kommas[8]+4];
+				gprmc->date[4]=buffer[kommas[8]+5];
+				gprmc->date[5]=buffer[kommas[8]+6];
+				//Struct auf gültig setzen
 				gprmc->valid=1;
 				return;
 			}

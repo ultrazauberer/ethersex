@@ -51,6 +51,14 @@ struct nmea_gprmc_t
   unsigned valid	: 1;
   
   uint8_t time[10];
+  uint8_t status;
+  uint8_t latitude[9];
+  uint8_t lat_dir;
+  uint8_t longitude[10];
+  uint8_t long_dir;
+// Erstmal rausgenommen, da variable Länge möglich
+//  uint8_t speed[4]; //in knots
+//  uint8_t angle[6]; //track angle in degrees
   uint8_t date[6];
 };
 
