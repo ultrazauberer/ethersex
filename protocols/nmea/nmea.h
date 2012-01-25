@@ -42,6 +42,9 @@
    0         1         2         3         4         5         6         7
 */
 
+/* enable debugging */
+#define DEBUG_NMEA
+
 /* added $GPRMC struct */
 struct nmea_gprmc_t
 {

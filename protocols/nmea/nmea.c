@@ -20,20 +20,12 @@
  * http://www.gnu.org/copyleft/gpl.html
  */
 
-#include "nmea.h"
-
-/* include debugging */
-#include "core/debug.h"
-#define DEBUG_NMEA
-
-/* include clock.h for timesupport */
-//#include "services/clock/clock.h"
-//struct clock_datetime_t current_time;
-
-#include "config.h"
 #define USE_USART NMEA_USE_USART
 #define BAUD 19200
+#include "config.h"
+#include "core/debug.h"
 #include "core/usart.h"
+#include "nmea.h"
 
 /* globale Variablen für buffer */
  
@@ -72,7 +64,15 @@ ISR(usart(USART,_RX_vect))
     else {
       nmea_string[nmea_str_count] = '\0';
       nmea_str_count = 0;
-      nmea_str_complete = 1;
+      /* Pre Parser für $GPRMC, da sonst Puffer immer mit anderen Daten gefüllt */
+      if(nmea_string[3]=='R' && nmea_string[4]=='M' && nmea_string[5]=='C')
+      {	
+        nmea_str_complete = 1;
+      }
+      else
+      {
+        nmea_str_complete = 0;
+      }
     }
   }
 }
@@ -190,7 +190,7 @@ void gprmc_start(void){
 	gprmc_parser(&nmea_string,&gprmc);
 	nmea_str_complete=0;
 	}
-	
+
 	#ifdef DEBUG_NMEA
 	debug_printf("GPRMC: valid: %d\n",gprmc.valid);
 	#endif
@@ -201,5 +201,5 @@ void gprmc_start(void){
   -- Ethersex META --
   header(protocols/nmea/nmea.h)
   init(nmea_init)
-  timer(1, gprmc_start())
+  timer(50, gprmc_start())
 */
