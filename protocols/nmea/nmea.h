@@ -56,9 +56,8 @@ struct nmea_gprmc_t
   uint8_t lat_dir;
   uint8_t longitude[10];
   uint8_t long_dir;
-// Erstmal rausgenommen, da variable Länge möglich
-//  uint8_t speed[4]; //in knots
-//  uint8_t angle[6]; //track angle in degrees
+  uint8_t speed[5]; //in knots
+  uint8_t angle[6]; //track angle in degrees
   uint8_t date[6];
 };
 

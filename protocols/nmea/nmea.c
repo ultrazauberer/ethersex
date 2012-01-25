@@ -116,6 +116,7 @@ void gprmc_parser(volatile char *buffer, struct nmea_gprmc_t *gprmc){
 	uint8_t checksum_gp=0x00;
 	uint8_t kommas[12]={0};
 	uint8_t komma_cnt=0;
+	uint8_t i=0;
 	//struct ungültig setzen
 	gprmc->valid=0;
 
@@ -166,50 +167,60 @@ void gprmc_parser(volatile char *buffer, struct nmea_gprmc_t *gprmc){
 				debug_printf("PARSEN kann beginnen\n");
 				#endif
 				//Nach dem 1. Komma kommt die Zeit
-				gprmc->time[0]=buffer[kommas[0]+1];
-				gprmc->time[1]=buffer[kommas[0]+2];
-				gprmc->time[2]=buffer[kommas[0]+3];
-				gprmc->time[3]=buffer[kommas[0]+4];
-				gprmc->time[4]=buffer[kommas[0]+5];
-				gprmc->time[5]=buffer[kommas[0]+6];
-				gprmc->time[6]=buffer[kommas[0]+7];
-				gprmc->time[7]=buffer[kommas[0]+8];
-				gprmc->time[8]=buffer[kommas[0]+9];
-				gprmc->time[9]=buffer[kommas[0]+10];
+				while(i<(kommas[1]-kommas[0]-1))
+				{
+					gprmc->time[i]=buffer[kommas[0]+(i+1)];
+					i++;
+				}
+				i=0;
 				//Nach dem 2. Komma kommt der Status
 				gprmc->status=buffer[kommas[1]+1];
 				//Nach dem 3. Komma kommt die Latitude
-				gprmc->latitude[0]=buffer[kommas[2]+1];
-				gprmc->latitude[1]=buffer[kommas[2]+2];
-				gprmc->latitude[2]=buffer[kommas[2]+3];
-				gprmc->latitude[3]=buffer[kommas[2]+4];
-				gprmc->latitude[4]=buffer[kommas[2]+5];
-				gprmc->latitude[5]=buffer[kommas[2]+6];
-				gprmc->latitude[6]=buffer[kommas[2]+7];
-				gprmc->latitude[7]=buffer[kommas[2]+8];
-				gprmc->latitude[8]=buffer[kommas[2]+9];
+				while(i<(kommas[3]-kommas[2]-1))
+				{
+					gprmc->latitude[i]=buffer[kommas[2]+(i+1)];
+					i++;
+				}
+				i=0;
+
 				//Nach dem 4. Komma kommt die Lat_dir
 				gprmc->lat_dir=buffer[kommas[3]+1];
+
 				//Nach dem 5. Komma kommt die Longitude
-				gprmc->longitude[0]=buffer[kommas[4]+1];
-				gprmc->longitude[1]=buffer[kommas[4]+2];
-				gprmc->longitude[2]=buffer[kommas[4]+3];
-				gprmc->longitude[3]=buffer[kommas[4]+4];
-				gprmc->longitude[4]=buffer[kommas[4]+5];
-				gprmc->longitude[5]=buffer[kommas[4]+6];
-				gprmc->longitude[6]=buffer[kommas[4]+7];
-				gprmc->longitude[7]=buffer[kommas[4]+8];
-				gprmc->longitude[8]=buffer[kommas[4]+9];
-				gprmc->longitude[9]=buffer[kommas[4]+10];
+				while(i<(kommas[5]-kommas[4]-1))
+				{
+					gprmc->longitude[i]=buffer[kommas[4]+(i+1)];
+					i++;
+				}
+				i=0;
+
 				//Nach dem 6. Komma kommt die Long_dir
 				gprmc->long_dir=buffer[kommas[5]+1];
+
+				//Nach dem 7. Komma kommt Speed
+				while(i<(kommas[7]-kommas[6]-1))
+				{
+					gprmc->speed[i]=buffer[kommas[6]+(i+1)];
+					i++;
+				}
+				i=0;
+
+				//Nach dem 8. Komma kommt Angle
+				while(i<(kommas[8]-kommas[7]-1))
+				{
+					gprmc->angle[i]=buffer[kommas[7]+(i+1)];
+					i++;
+				}
+				i=0;
+
 				//Nach dem 9. Komma kommt das Datum
-				gprmc->date[0]=buffer[kommas[8]+1];
-				gprmc->date[1]=buffer[kommas[8]+2];
-				gprmc->date[2]=buffer[kommas[8]+3];
-				gprmc->date[3]=buffer[kommas[8]+4];
-				gprmc->date[4]=buffer[kommas[8]+5];
-				gprmc->date[5]=buffer[kommas[8]+6];
+				while(i<(kommas[9]-kommas[8]-1))
+				{
+					gprmc->date[i]=buffer[kommas[8]+(i+1)];
+					i++;
+				}
+				i=0;
+
 				//Struct auf gültig setzen
 				gprmc->valid=1;
 				return;
@@ -244,7 +255,6 @@ void gprmc_start(void){
 	#endif
 }
 
-//  timer(50, gprmc_start())
 /*
   -- Ethersex META --
   header(protocols/nmea/nmea.h)
