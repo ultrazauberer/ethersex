@@ -66,7 +66,7 @@ void nmea_init(void);
 uint8_t char2hex(uint8_t character);
 
 /* gprmc parser */
-void gprmc_parser(uint8_t *buffer, struct nmea_gprmc_t *gprmc);
+void gprmc_parser(volatile char *buffer, struct nmea_gprmc_t *gprmc);
 
 /* startet den parser */
 void gprmc_start(void);

@@ -49,7 +49,6 @@ parse_cmd_nmea_gprmc(char *cmd, char *output, uint16_t len)
   return ECMD_FINAL(17);
 }
 
-//  ecmd_feature(nmea_gprmc, "nmea gprmc",,get gprmc time and date)
 /*
   -- Ethersex META --
   block([[GPS]])

@@ -107,7 +107,7 @@ uint8_t char2hex(uint8_t character){
 	}
 }
 /* eventuell kompletten buffer struct übergeben */
-void gprmc_parser(uint8_t *buffer, struct nmea_gprmc_t *gprmc){
+void gprmc_parser(volatile char *buffer, struct nmea_gprmc_t *gprmc){
 	//XOR = ^
 	//The checksum field consists of a '*' and two hex digits representing
 	//an 8 bit exclusive OR of all characters between, but not including, the '$' and '*'.
@@ -137,7 +137,7 @@ void gprmc_parser(uint8_t *buffer, struct nmea_gprmc_t *gprmc){
 		}
 		else
 		{
-			if(buffer[1]=='G' && buffer[2]=='P' && buffer[3]=='R' && buffer[4]=='M' && buffer[5]=='C')
+			if(buffer[1]=='G' && buffer[2]=='P' && buffer[3]=='R' && buffer[4]=='M' && buffer[5]=='C' && buffer[18]=='A')
 			{
 				//buffer enthält $GPRMC am Anfang
 				//kann geparst werden, da pruefsumme auch stimmt
@@ -201,5 +201,5 @@ void gprmc_start(void){
   -- Ethersex META --
   header(protocols/nmea/nmea.h)
   init(nmea_init)
-  timer(25, gprmc_start())
+  timer(1, gprmc_start())
 */
