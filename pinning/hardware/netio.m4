@@ -1,10 +1,12 @@
 /* port the enc28j60 is attached to */
 pin(SPI_CS_NET, SPI_CS_HARDWARE)
 
-ifdef(`conf_DCF1', `dnl
- /* port config for DCF77 */
- pin(DCF1_PCINT, PD2, INPUT)
-')dnl
+//ifdef(`conf_DCF1', `dnl
+// /* port config for DCF77 */
+// pin(DCF1_PCINT, PD2, INPUT)
+//')dnl
+
+DCF77_USE_INT(0, PD2)
 
 ifdef(`conf_DCF1_USE_PON', `dnl
  pin(DCF1_PON, PD3, OUTPUT)

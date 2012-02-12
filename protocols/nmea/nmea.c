@@ -25,13 +25,15 @@
 #include "config.h"
 #include "core/debug.h"
 #include "core/usart.h"
-#include "nmea.h"
+
 #ifdef NMEA_TIMESUPPORT
 #include "services/clock/clock.h"
 #endif
 #ifdef NTPD_SUPPORT
 #include "services/ntp/ntpd_net.h"
 #endif
+
+#include "nmea.h"
 
 /* globale Variablen für buffer */
 volatile uint8_t nmea_str_complete = 0;     // 1 .. String komplett empfangen
@@ -43,7 +45,8 @@ struct nmea_gprmc_t nmea_gprmc;
 
 /* clock_datetime_t struct anlegen */
 #ifdef NMEA_TIMESUPPORT
-struct clock_datetime_t current_time;
+// nun ohne struct
+clock_datetime_t current_time;
 uint8_t nmea_timestamp_valid=0;
 #endif
 
@@ -90,34 +93,12 @@ ISR(usart(USART,_RX_vect))
 }
 
 uint8_t char2hex(char character){
-	//returns hex value of char
-	switch (character)
-	{
-		case 48: return 0; break; //0
-		case 49: return 1; break; //1
-		case 50: return 2; break; //2
-		case 51: return 3; break; //3
-		case 52: return 4; break; //4
-		case 53: return 5; break; //5
-		case 54: return 6; break; //6
-		case 55: return 7; break; //7
-		case 56: return 8; break; //8
-		case 57: return 9; break; //9
-		case 65: return 10; break; //A
-		case 66: return 11; break; //B
-		case 67: return 12; break; //C
-		case 68: return 13; break; //D
-		case 69: return 14; break; //E
-		case 70: return 15; break; //F
-		case 97: return 10; break; //a
-		case 98: return 11; break; //b
-		case 99: return 12; break; //c
-		case 100: return 13; break; //d
-		case 101: return 14; break; //e
-		case 102: return 15; break; //f
-		default: return 255;
-	}
+	//values for lowercase
+	if(character>'F'){character-='W';}
+	//A==10 --> 'A'-'7'=10
+	return (character - (character > '9' ? '7' : '0'));
 }
+
 /* eventuell kompletten buffer struct übergeben */
 void gprmc_parser(void){
 	//XOR = ^
@@ -257,7 +238,7 @@ void gprmc_start(void){
 
 /* Zeitfunktionen */
 #ifdef NMEA_TIMESUPPORT
-uint32_t get_nmea_timestamp(void){
+timestamp_t get_nmea_timestamp(void){
 	if(nmea_gprmc.valid)
 	{
 	current_time.sec=(nmea_gprmc.time[4]-0x30)*10;
@@ -275,8 +256,9 @@ uint32_t get_nmea_timestamp(void){
 	current_time.year+=(nmea_gprmc.date[5]-0x30)+100;
 
 	nmea_timestamp_valid=1;
-	return clock_utc2timestamp(&current_time,2);
+	return clock_mktime(&current_time,0);
 	}
+	return 0;
 }
 #endif
 

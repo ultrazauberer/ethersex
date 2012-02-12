@@ -29,6 +29,7 @@
 #include "nmea.h"
 
 static const char PROGMEM nmea_na[] = "no data available.";
+static const char PROGMEM gmaps_link[] = "http://maps.google.de/?q=";
 
 int16_t
 parse_cmd_nmea_buffer(char *cmd, char *output, uint16_t len) 

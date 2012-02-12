@@ -24,6 +24,7 @@
 #define NMEA_H 1
 
 #include <stdint.h>
+#include "services/clock/clock.h"
 
 /* 
    Example data:
@@ -44,6 +45,7 @@
 
 /* enable debugging */
 #define DEBUG_NMEA
+//#undef DEBUG_NMEA
 
 /* enable timesupport for GPS */
 #define NMEA_TIMESUPPORT
@@ -64,14 +66,14 @@ struct nmea_gprmc_t
   char date[7];
 };
 
+extern struct nmea_gprmc_t nmea_gprmc;
+
 /* globale Variablen für buffer */
 #define NMEA_MAXSTRLEN 80
  
 extern volatile uint8_t nmea_str_complete;     // 1 .. String komplett empfangen
 extern volatile uint8_t nmea_str_count;
 extern volatile char nmea_string[NMEA_MAXSTRLEN + 1];
-
-extern struct nmea_gprmc_t nmea_gprmc;
 
 void nmea_init(void);
 
@@ -86,7 +88,7 @@ void gprmc_start(void);
 
 /* clock_datetime_t struct befüllen und timestamp zurückgeben */
 #ifdef NMEA_TIMESUPPORT
-uint32_t get_nmea_timestamp(void);
+timestamp_t get_nmea_timestamp(void);
 #endif
 
 #endif	/* NMEA_H */
