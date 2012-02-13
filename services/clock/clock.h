@@ -2,6 +2,7 @@
  *
  * Copyright (c) 2007,2008 by Christian Dietrich <stettberger@dokucode.de>
  * Copyright (c) 2011-2012 by Erik Kunze <ethersex@erik-kunze.de>
+ * Copyright (c) 2012 by Florian Franke <derultrazauberer@web.de>
  * (c) by Alexander Neumann <alexander@bumpern.de>
  *
  * This program is free software; you can redistribute it and/or
@@ -62,5 +63,9 @@ timestamp_t clock_get_uptime(void);
 /* the actual time */
 void clock_set_time_raw(timestamp_t new_sync_timestamp);
 void clock_set_time(timestamp_t new_sync_timestamp);
+
+/* weighted time syncs for multiple sources */
+/* source: 0->dcf, 1->gps, 2->ntp */
+void clock_set_time_weighted(timestamp_t new_sync_timestamp, uint8_t source);
 
 #endif /* __CLOCK_H */

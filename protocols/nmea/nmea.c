@@ -216,7 +216,8 @@ void gprmc_start(void){
 	#ifdef NMEA_TIMESUPPORT
 	if(abs(clock_get_time()-get_nmea_timestamp())>=1 && nmea_timestamp_valid==1)
 	{
-		clock_set_time(get_nmea_timestamp());
+		clock_set_time_weighted(get_nmea_timestamp(),1);
+		//clock_set_time(get_nmea_timestamp());
 		nmea_timestamp_valid=0;
 		#ifdef NTPD_SUPPORT
 		ntp_setstratum(0);

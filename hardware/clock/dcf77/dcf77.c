@@ -5,6 +5,7 @@
  * Copyright (c) 2009 by Stefan Siegl <stesie@brokenpipe.de>
  * Copyright (c) 2010 by Hans Baechle <hans.baechle@gmx.net>
  * Copyright (c) 2011 by Erik Kunze <ethersex@erik-kunze.de>
+ * Copyright (c) 2012 by Florian Franke <derultrazauberer@web.de>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -177,7 +178,8 @@ ISR(ANALOG_COMP_vect)
       if (dcf.valid == 1)
       {
         // set seconds
-        clock_set_time(timestamp);
+        //clock_set_time(timestamp);
+	clock_set_time_weighted(timestamp,0);
         // and reset milliseconds
 #ifdef CLOCK_CRYSTAL_SUPPORT
         timertemp = 0;

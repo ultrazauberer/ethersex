@@ -3,6 +3,7 @@
  * Copyright (c) 2009 by Dirk Pannenbecker <dp@sd-gp.de>
  * Copyright (c) 2009 by Stefan Siegl <stesie@brokenpipe.de>
  * Copyright (c) 2011-2012 by Erik Kunze <ethersex@erik-kunze.de>
+ * Copyright (c) 2012 by Florian Franke <derultrazauberer@web.de>
  * (c) by Alexander Neumann <alexander@bumpern.de>
  *
  * This program is free software; you can redistribute it and/or
@@ -40,6 +41,11 @@
 #include "core/periodic.h"
 #include "clock.h"
 
+/* here are the weights of the sources */
+#define DCF_W 30 //high value: because of slow sync
+#define GPS_W 1 //low value: every second a sync if gps has a fix
+#define NTP_W 2 //low value: low priority
+
 static timestamp_t clock_timestamp;
 static uint8_t ticks;
 static timestamp_t sync_timestamp;
@@ -48,6 +54,7 @@ static timestamp_t n_sync_tick;
 static int16_t delta;
 static uint16_t ntp_count;
 static uint16_t dcf_count;
+
 
 #ifdef NTP_SUPPORT
 #define NTP_RESYNC_PERIOD NTP_QUERY_INTERVAL
@@ -211,6 +218,40 @@ clock_set_time(timestamp_t new_sync_timestamp)
 #ifdef NTP_SUPPORT
   ntp_timer = NTP_RESYNC_PERIOD;
 #endif
+}
+
+void
+clock_set_time_weighted(timestamp_t new_sync_timestamp, uint8_t source)
+{
+  static uint8_t already_synced=0;
+  static uint8_t dcf_cnt=0;
+  static uint8_t gps_cnt=0;
+  static uint8_t ntp_cnt=0;
+
+/* already synced? no, than sync first new timestamp */
+  if(!already_synced)
+	{
+	  clock_set_time(new_sync_timestamp);
+	  already_synced=1;
+	}
+  else
+	{
+	  switch (source)
+		{
+		  case 0: dcf_cnt++; break; //dcf
+		  case 1: gps_cnt++; break; //gps
+		  case 2: ntp_cnt++; break; //ntp
+		  default: break;
+		}
+	  if(dcf_cnt*DCF_W >= 60 || gps_cnt*GPS_W >= 60 || ntp_cnt*NTP_W >= 60)
+		{
+		  clock_set_time(new_sync_timestamp);
+		  already_synced=1;
+		  dcf_cnt=0;
+		  gps_cnt=0;
+		  ntp_cnt=0;
+		}
+	}
 }
 
 timestamp_t
