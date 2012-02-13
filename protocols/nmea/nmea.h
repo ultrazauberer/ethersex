@@ -23,8 +23,17 @@
 #ifndef NMEA_H
 #define NMEA_H 1
 
+/* enable debugging */
+//#define DEBUG_NMEA
+#undef DEBUG_NMEA
+
+/* enable timesupport for GPS */
+#define NMEA_TIMESUPPORT
+
 #include <stdint.h>
+#ifdef NMEA_TIMESUPPORT
 #include "services/clock/clock.h"
+#endif
 
 /* 
    Example data:
@@ -42,13 +51,6 @@
    012345678901234567890123456789012345678901234567890123456789012345678901234
    0         1         2         3         4         5         6         7
 */
-
-/* enable debugging */
-#define DEBUG_NMEA
-//#undef DEBUG_NMEA
-
-/* enable timesupport for GPS */
-#define NMEA_TIMESUPPORT
 
 /* added $GPRMC struct */
 struct nmea_gprmc_t
