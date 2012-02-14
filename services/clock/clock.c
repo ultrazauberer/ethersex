@@ -235,6 +235,10 @@ clock_set_time_weighted(timestamp_t new_sync_timestamp, uint8_t source)
   if(!already_synced)
 	{
 	  clock_set_time(new_sync_timestamp);
+	  #ifdef CLOCK_CRYSTAL_SUPPORT
+	  //reset ms if not ntp
+	  if(source!=2){TIMER_8_AS_1_COUNTER_CURRENT=0;}
+	  #endif
 	  already_synced=1;
 	  debug_printf("Timesync: already_synced %i\n",already_synced);
 	}
@@ -249,6 +253,10 @@ clock_set_time_weighted(timestamp_t new_sync_timestamp, uint8_t source)
   if((dcf_cnt*DCF_W >= 60) || (gps_cnt*GPS_W >= 60) || (ntp_cnt*NTP_W >= 60))
 	{
 	  clock_set_time(new_sync_timestamp);
+	  #ifdef CLOCK_CRYSTAL_SUPPORT
+	  //reset ms if not ntp
+	  if(source!=2){TIMER_8_AS_1_COUNTER_CURRENT=0;}
+	  #endif
 	  dcf_cnt=0;
 	  gps_cnt=0;
 	  ntp_cnt=0;

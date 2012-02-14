@@ -180,8 +180,8 @@ ISR(ANALOG_COMP_vect)
         // set seconds
         //clock_set_time(timestamp);
 	clock_set_time_weighted(timestamp,0);
-        // and reset milliseconds
-#ifdef CLOCK_CRYSTAL_SUPPORT
+        // and reset milliseconds --> auslagern in clock.c, reset erst beim setzen des Timestamps durchführen
+/*#ifdef CLOCK_CRYSTAL_SUPPORT
         timertemp = 0;
         TIMER_8_AS_1_COUNTER_CURRENT = timertemp;
 #elif CLOCK_CPU_SUPPORT
@@ -189,7 +189,7 @@ ISR(ANALOG_COMP_vect)
           65536 - CLOCK_SECONDS + (timertemp % CLOCK_TICKS);
         timertemp = 65536 - CLOCK_SECONDS;
         TC1_COUNTER_CURRENT = timertemp;
-#endif
+#endif*/
         last_valid_timestamp = timestamp;
         set_dcf_count(1);
         set_ntp_count(0);

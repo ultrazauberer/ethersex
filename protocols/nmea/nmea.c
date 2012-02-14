@@ -45,7 +45,7 @@ struct nmea_gprmc_t nmea_gprmc;
 
 /* clock_datetime_t struct anlegen */
 #ifdef NMEA_TIMESUPPORT
-timestamp_t last_sync;
+volatile timestamp_t last_sync;
 clock_datetime_t current_time;
 volatile uint8_t nmea_timestamp_valid=0;
 #endif
@@ -211,19 +211,19 @@ void gprmc_start(void){
 	{
 	gprmc_parser();
 	nmea_str_complete=0;
-	
+
+	#ifdef NMEA_TIMESUPPORT
 	last_sync=get_nmea_timestamp();
 
 	/* Abweichung größer gleich 1 Sekunde? Neue Zeit setzen */
-	#ifdef NMEA_TIMESUPPORT
-	if(abs(clock_get_time()-last_sync)>=1 && nmea_timestamp_valid==1 && last_sync>0)
+	if(clock_get_time()!=last_sync && nmea_timestamp_valid==1 && last_sync>0)
 	{
 		clock_set_time_weighted(last_sync,1);
 		//clock_set_time(last_sync);
-		//reset the ms: now just for 32khz crystal
-		#ifdef CLOCK_CRYSTAL_SUPPORT
+		//reset the ms: now just for 32khz crystal --> auslagern in clock.c
+		/*#ifdef CLOCK_CRYSTAL_SUPPORT
 		TIMER_8_AS_1_COUNTER_CURRENT=0;
-		#endif
+		#endif*/
 		nmea_timestamp_valid=0;
 		#ifdef NTPD_SUPPORT
 		ntp_setstratum(0);
