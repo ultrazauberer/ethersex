@@ -178,8 +178,8 @@ ISR(ANALOG_COMP_vect)
       if (dcf.valid == 1)
       {
         // set seconds
-        //clock_set_time(timestamp);
-	clock_set_time_weighted(timestamp,0);
+        clock_set_time(timestamp);
+	//clock_set_time_weighted(timestamp,0);
         // and reset milliseconds
 #ifdef CLOCK_CRYSTAL_SUPPORT
         timertemp = 0;

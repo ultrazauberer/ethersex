@@ -55,7 +55,7 @@
 /* added $GPRMC struct */
 struct nmea_gprmc_t
 {
-  unsigned valid	: 1;
+  volatile unsigned valid	: 1;
   
   char time[11];
   char status;

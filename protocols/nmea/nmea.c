@@ -45,9 +45,9 @@ struct nmea_gprmc_t nmea_gprmc;
 
 /* clock_datetime_t struct anlegen */
 #ifdef NMEA_TIMESUPPORT
-// nun ohne struct
+timestamp_t last_sync;
 clock_datetime_t current_time;
-uint8_t nmea_timestamp_valid=0;
+volatile uint8_t nmea_timestamp_valid=0;
 #endif
 
 /* We generate our own usart init module, for our usart port */
@@ -212,12 +212,18 @@ void gprmc_start(void){
 	gprmc_parser();
 	nmea_str_complete=0;
 	
+	last_sync=get_nmea_timestamp();
+
 	/* Abweichung größer gleich 1 Sekunde? Neue Zeit setzen */
 	#ifdef NMEA_TIMESUPPORT
-	if(abs(clock_get_time()-get_nmea_timestamp())>=1 && nmea_timestamp_valid==1)
+	if(abs(clock_get_time()-last_sync)>=1 && nmea_timestamp_valid==1 && last_sync>0)
 	{
-		clock_set_time_weighted(get_nmea_timestamp(),1);
-		//clock_set_time(get_nmea_timestamp());
+		//clock_set_time_weighted(get_nmea_timestamp(),1);
+		clock_set_time(last_sync);
+		//reset the ms: now just for 32khz crystal
+		#ifdef CLOCK_CRYSTAL_SUPPORT
+		TIMER_8_AS_1_COUNTER_CURRENT=0;
+		#endif
 		nmea_timestamp_valid=0;
 		#ifdef NTPD_SUPPORT
 		ntp_setstratum(0);
@@ -259,7 +265,7 @@ timestamp_t get_nmea_timestamp(void){
 	nmea_timestamp_valid=1;
 	return clock_mktime(&current_time,0);
 	}
-	return 0;
+	else return 0;
 }
 #endif
 

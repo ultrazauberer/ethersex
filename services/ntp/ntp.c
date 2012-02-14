@@ -143,8 +143,8 @@ ntp_newdata(void)
 #ifdef DEBUG_NTP
     debug_printf("NTP: Set new time: %lu\n",ntp_timestamp);
 #endif
-  clock_set_time_weighted(ntp_timestamp,2);
-  //clock_set_time(ntp_timestamp);
+  //clock_set_time_weighted(ntp_timestamp,2);
+  clock_set_time(ntp_timestamp);
   set_dcf_count(0);
   set_ntp_count(1);
 #ifdef NTPD_SUPPORT
