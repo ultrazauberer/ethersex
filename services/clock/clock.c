@@ -42,9 +42,9 @@
 #include "clock.h"
 
 /* here are the weights of the sources */
-#define DCF_W 30 //high value: because of slow sync
-#define GPS_W 1 //low value: every second a sync if gps has a fix
-#define NTP_W 2 //low value: low priority
+#define DCF_W 30 //30 high value: because of slow sync
+#define GPS_W 1 //1 low value: every second a sync if gps has a fix
+#define NTP_W 2 //2 low value: low priority
 
 static timestamp_t clock_timestamp;
 static uint8_t ticks;
@@ -227,12 +227,15 @@ clock_set_time_weighted(timestamp_t new_sync_timestamp, uint8_t source)
   static uint8_t dcf_cnt=0;
   static uint8_t gps_cnt=0;
   static uint8_t ntp_cnt=0;
-
+  debug_printf("Timesync: clock_set_time_weighted(%li,%i)\n",new_sync_timestamp,source);
+  debug_printf("Timesync: DCF:%i GPS:%i NTP:%i\n",dcf_cnt,gps_cnt,ntp_cnt);
+  debug_printf("Timesync: already_synced %i\n",already_synced);
 /* already synced? no, than sync first new timestamp */
   if(!already_synced)
 	{
 	  clock_set_time(new_sync_timestamp);
 	  already_synced=1;
+	  debug_printf("Timesync: already_synced %i\n",already_synced);
 	}
   else
 	{
@@ -243,10 +246,10 @@ clock_set_time_weighted(timestamp_t new_sync_timestamp, uint8_t source)
 		  case 2: ntp_cnt++; break; //ntp
 		  default: break;
 		}
-	  if(dcf_cnt*DCF_W >= 60 || gps_cnt*GPS_W >= 60 || ntp_cnt*NTP_W >= 60)
+	  debug_printf("Timesync: DCF:%i GPS:%i NTP:%i\n",dcf_cnt,gps_cnt,ntp_cnt);
+	  if((dcf_cnt*DCF_W >= 60) || (gps_cnt*GPS_W >= 60) || (ntp_cnt*NTP_W >= 60))
 		{
 		  clock_set_time(new_sync_timestamp);
-		  already_synced=1;
 		  dcf_cnt=0;
 		  gps_cnt=0;
 		  ntp_cnt=0;
