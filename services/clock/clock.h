@@ -66,6 +66,6 @@ void clock_set_time(timestamp_t new_sync_timestamp);
 
 /* weighted time syncs for multiple sources */
 /* source: 0->dcf, 1->gps, 2->ntp */
-//void clock_set_time_weighted(timestamp_t new_sync_timestamp, uint8_t source);
+void clock_set_time_weighted(timestamp_t new_sync_timestamp, uint8_t source);
 
 #endif /* __CLOCK_H */

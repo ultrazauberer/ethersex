@@ -218,8 +218,8 @@ void gprmc_start(void){
 	#ifdef NMEA_TIMESUPPORT
 	if(abs(clock_get_time()-last_sync)>=1 && nmea_timestamp_valid==1 && last_sync>0)
 	{
-		//clock_set_time_weighted(get_nmea_timestamp(),1);
-		clock_set_time(last_sync);
+		clock_set_time_weighted(last_sync,1);
+		//clock_set_time(last_sync);
 		//reset the ms: now just for 32khz crystal
 		#ifdef CLOCK_CRYSTAL_SUPPORT
 		TIMER_8_AS_1_COUNTER_CURRENT=0;
