@@ -44,8 +44,10 @@
 /* here are the weights of the sources */
 /* remember that ntp and gps will only set the time if the delta is to big */
 #define DCF_W 20 //30 high value: because of slow sync
-#define GPS_W 20 //1 low value: every second a sync if gps has a fix
+#define GPS_W 5 //1 low value: every second a sync if gps has a fix
 #define NTP_W 2 //2 low value: low priority
+//#define DEBUG_TIMESYNC
+#undef DEBUG_TIMESYNC
 
 static timestamp_t clock_timestamp;
 static uint8_t ticks;
@@ -228,9 +230,11 @@ clock_set_time_weighted(timestamp_t new_sync_timestamp, uint8_t source)
   static uint8_t dcf_cnt=0;
   static uint8_t gps_cnt=0;
   static uint8_t ntp_cnt=0;
+  #ifdef DEBUG_TIMESYNC
   debug_printf("Timesync: clock_set_time_weighted(%li,%i)\n",new_sync_timestamp,source);
   debug_printf("Timesync: DCF:%i GPS:%i NTP:%i\n",dcf_cnt,gps_cnt,ntp_cnt);
   debug_printf("Timesync: already_synced %i\n",already_synced);
+  #endif
   //already synced? no, than sync first new timestamp
   if(!already_synced)
 	{
@@ -240,7 +244,9 @@ clock_set_time_weighted(timestamp_t new_sync_timestamp, uint8_t source)
 	  if(source!=2){TIMER_8_AS_1_COUNTER_CURRENT=0;}
 	  #endif
 	  already_synced=1;
+	  #ifdef DEBUG_TIMESYNC
 	  debug_printf("Timesync: already_synced %i\n",already_synced);
+	  #endif
 	}
   switch (source)
 	{
@@ -249,7 +255,9 @@ clock_set_time_weighted(timestamp_t new_sync_timestamp, uint8_t source)
 	  case 2: ntp_cnt++; break; //ntp
 	  default: break;
 	}
+  #ifdef DEBUG_TIMESYNC
   debug_printf("Timesync: DCF:%i GPS:%i NTP:%i\n",dcf_cnt,gps_cnt,ntp_cnt);
+  #endif
   if((dcf_cnt*DCF_W >= 60) || (gps_cnt*GPS_W >= 60) || (ntp_cnt*NTP_W >= 60))
 	{
 	  clock_set_time(new_sync_timestamp);
@@ -260,7 +268,9 @@ clock_set_time_weighted(timestamp_t new_sync_timestamp, uint8_t source)
 	  dcf_cnt=0;
 	  gps_cnt=0;
 	  ntp_cnt=0;
+	  #ifdef DEBUG_TIMESYNC
 	  debug_printf("Timesync: New time set!\n");
+	  #endif
 	}
 }
 
